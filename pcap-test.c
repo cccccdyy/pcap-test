@@ -66,13 +66,15 @@ int main(int argc, char* argv[]) {
 		struct libnet_ipv4_hdr* ipv4_hdr = (struct libnet_ipv4_hdr*)packet;
 
 		/* Get TCP header */
-		packet += sizeof(struct libnet_ipv4_hdr);
+		uint8_t iphdr_len = (0x00 | ipv4_hdr->ip_hl) * 4;
+		packet += iphdr_len;
 		struct libnet_tcp_hdr* tcp_hdr = (struct libnet_tcp_hdr*)packet;
 
 		/* Get Data */
-		packet += sizeof(struct libnet_tcp_hdr);
+		uint8_t tcphdr_len = (0x00 | tcp_hdr->th_off) * 4;
+		packet += tcphdr_len;
 		uint8_t* data = (uint8_t*)packet;
-		unsigned int datalen = header->caplen - (sizeof(struct libnet_ethernet_hdr) + sizeof(struct libnet_ipv4_hdr) + sizeof(struct libnet_tcp_hdr));
+		uint16_t datalen = ntohs(ipv4_hdr->ip_len) - iphdr_len - tcphdr_len;
 		unsigned int maxlen = datalen > 20 ? 20 : datalen;
 
 		uint16_t eth_type = ntohs(ethernet_hdr->ether_type);
